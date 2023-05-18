@@ -41,7 +41,7 @@ PYBIND11_MODULE(can_ada, m) {
         .def("has_valid_domain", &ada::url_aggregator::has_valid_domain)
 
         .def("to_diagram", &ada::url_aggregator::to_diagram)
-        .def("__str__", &ada::url_aggregator::to_string)
+        .def("__str__", &ada::url_aggregator::get_href)
         .def("validate", &ada::url_aggregator::validate);
 
     m.def("parse", [](std::string_view input) {
