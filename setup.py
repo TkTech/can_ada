@@ -8,6 +8,8 @@ setup(
     version=__version__,
     author="Tyler Kennedy",
     author_email="tk@tkte.ch",
+    long_description_content_type="text/markdown",
+    long_description=open("README.md").read(),
     url="https://github.com/tktech/can-ada",
     description="Ada is a fast spec-compliant url parser",
     ext_modules=[
