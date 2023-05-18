@@ -25,9 +25,9 @@ print(can_ada.parse(urlstring).hostname)
 # the correctly parsed pathname according to WHATWG
 print(can_ada.parse(urlstring).pathname)
 import urllib
-#prints www.googlé.com
+# prints www.googlé.com
 print(urllib.parse.urlparse(urlstring).hostname)
-#prints /./path/../path2/
+# prints /./path/../path2/
 print(urllib.parse.urlparse(urlstring).path)
 ```
 
@@ -58,7 +58,7 @@ print(url) # https://google.com/search?q=canada&safe=off
 
 ## Performance
 
-We find that `can_ada` maybe be faster than `urllib`:
+We find that `can_ada` may be faster than `urllib`:
 
 ```
 $ python3 -m timeit -s 'import can_ada' 'can_ada.parse("https://tkte.ch/search?q=canada")'
