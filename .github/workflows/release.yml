@@ -45,8 +45,8 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-10.15]
-        py: ["cp36", "cp37", "cp38", "cp39", "cp310", "pp37", "pp38", "pp39"]
+        os: [ubuntu-20.04, windows-2019, macos-11]
+        py: ["cp37", "cp38", "cp39", "cp310", "cp311", "pp37", "pp38", "pp39"]
 
     steps:
       - uses: actions/checkout@v2
