@@ -27,8 +27,8 @@ jobs:
       - name: Building source distribution
         run: |
           pip install -e "."
-          pip install pytest
-          python setup.py sdist
+          pip install pytest build
+          python -m build . --sdist
 
       - name: Running tests
         run: |

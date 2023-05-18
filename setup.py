@@ -1,7 +1,7 @@
 from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 setup(
     name="can_ada",
