@@ -42,6 +42,9 @@ jobs:
     needs: [sdist]
     name: "[${{ strategy.job-index }}/${{ strategy.job-total }}] py${{ matrix.py }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 10.15
+
     strategy:
       fail-fast: true
       matrix:
