@@ -44,6 +44,11 @@ PYBIND11_MODULE(can_ada, m) {
         .def("__str__", &ada::url_aggregator::get_href)
         .def("validate", &ada::url_aggregator::validate);
 
+    m.def("idna_decode", &ada::idna::to_unicode);
+    m.def("idna_encode", [](std::string input) -> py::bytes {
+      return py::bytes(ada::idna::to_ascii(input));
+    });
+
     m.def("parse", [](std::string_view input) {
         ada::result<ada::url_aggregator> url = ada::parse<ada::url_aggregator>(input);
         if (!url) {

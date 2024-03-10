@@ -5,7 +5,9 @@ import typing
 __all__ = [
     "URL",
     "can_parse",
-    "parse"
+    "parse",
+    "idna_encode",
+    "idna_decode"
 ]
 
 
@@ -117,5 +119,9 @@ class URL():
 def can_parse(input: str, base_input: str = None) -> bool:
     pass
 def parse(arg0: str) -> URL:
+    pass
+def idna_encode(arg0: str) -> bytes:
+    pass
+def idna_decode(arg0: bytes) -> str:
     pass
 __version__ = '1.0.0'

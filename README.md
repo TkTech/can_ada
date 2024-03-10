@@ -1,6 +1,7 @@
 # can_ada
 
-Python bindings for [Ada][], a fast and spec-compliant URL parser.
+[Fast] Python bindings for [Ada][], a fast and WHATWG spec-compliant URL parser.
+This is the URL parser used in projects like Node.js.
 
 ## Installation
 
