@@ -1,4 +1,4 @@
-from functools import cache
+from functools import lru_cache
 from pathlib import Path
 
 import can_ada
@@ -6,7 +6,7 @@ import ada_url
 import urllib.parse
 
 
-@cache
+@lru_cache
 def data() -> list[str]:
     current_file_dir = Path(__file__).parent
     with open(current_file_dir / "data" / "top100.txt", "r") as f:
