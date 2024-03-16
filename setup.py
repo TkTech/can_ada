@@ -31,7 +31,7 @@ setup(
         "test": [
             "pytest",
             "pytest-benchmark",
-            "ada-python",
+            "ada_url",
         ]
     },
     zip_safe=False,
