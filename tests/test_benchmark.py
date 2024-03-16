@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+import pytest
 import can_ada
 import ada_url
 import urllib.parse
@@ -38,13 +39,16 @@ def can_ada_parse():
             pass
 
 
+@pytest.mark.slow
 def test_urllib_parse(benchmark):
     benchmark(urllib_parse)
 
 
+@pytest.mark.slow
 def test_ada_python_parse(benchmark):
     benchmark(ada_python_parse)
 
 
+@pytest.mark.slow
 def test_can_ada_parse(benchmark):
     benchmark(can_ada_parse)

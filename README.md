@@ -17,19 +17,22 @@ C++17-or-greater compiler will be required to build the underlying Ada library.
 Unlike the standard library's `urllib.parse` module, this library is compliant with the WHATWG URL specification.
 
 ```python
-urlstring = "https://www.GOoglé.com/./path/../path2/"
 import can_ada
-# prints www.xn--googl-fsa.com,
-# the correctly parsed domain name according to WHATWG
-print(can_ada.parse(urlstring).hostname)
-# prints /path2/
-# the correctly parsed pathname according to WHATWG
-print(can_ada.parse(urlstring).pathname)
-import urllib
+urlstring = "https://www.GOoglé.com/./path/../path2/"
+url = can_ada.parse(urlstring)
+# prints www.xn--googl-fsa.com, the correctly parsed domain name according
+# to WHATWG
+print(url.hostname)
+# prints /path2/, which is the correctly parsed pathname according to WHATWG
+print(url.pathname)
+
+import urllib.parse
+urlstring = "https://www.GOoglé.com/./path/../path2/"
+url = urllib.parse.urlparse(urlstring)
 # prints www.googlé.com
-print(urllib.parse.urlparse(urlstring).hostname)
+print(url.hostname)
 # prints /./path/../path2/
-print(urllib.parse.urlparse(urlstring).path)
+print(url.path)
 ```
 
 ## Usage
@@ -59,15 +62,22 @@ print(url) # https://google.com/search?q=canada&safe=off
 
 ## Performance
 
-We find that `can_ada` may be faster than `urllib`:
+We find that `can_ada` is typically ~4x faster than urllib:
 
 ```
-$ python3 -m timeit -s 'import can_ada' 'can_ada.parse("https://tkte.ch/search?q=canada")'
-1000000 loops, best of 5: 378 nsec per loop
-
-$ python3 -m timeit -s 'import urllib' 'urllib.parse.urlparse("https://tkte.ch/search?q=canada")'
-500000 loops, best of 5: 491 nsec per loop
+---------------------------------------------------------------------------------
+Name (time in ms)              Min                 Max                Mean       
+---------------------------------------------------------------------------------
+test_can_ada_parse         54.1304 (1.0)       54.6734 (1.0)       54.3699 (1.0) 
+test_ada_python_parse     107.5653 (1.99)     108.1666 (1.98)     107.7817 (1.98)
+test_urllib_parse         251.5167 (4.65)     255.1327 (4.67)     253.2407 (4.66)
+---------------------------------------------------------------------------------
 ```
 
+To run the benchmarks locally, use:
+
+```
+pytest --runslow
+```
 
 [Ada]: https://ada-url.com/
