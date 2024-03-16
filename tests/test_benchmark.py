@@ -2,9 +2,10 @@ from functools import lru_cache
 from pathlib import Path
 
 import pytest
-import can_ada
-import ada_url
 import urllib.parse
+
+ada_url = pytest.importorskip("ada_url")
+can_ada = pytest.importorskip("can_ada")
 
 
 @lru_cache
