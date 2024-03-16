@@ -28,7 +28,11 @@ setup(
         ]
     },
     extras_require={
-        "test": "pytest"
+        "test": [
+            "pytest",
+            "pytest-benchmark",
+            "ada-python",
+        ]
     },
     zip_safe=False,
     python_requires=">=3.7",
