@@ -1,9 +1,10 @@
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string_view.h>
 #include "ada.h"
 
-namespace py = pybind11;
+namespace py = nanobind;
 
-PYBIND11_MODULE(can_ada, m) {
+NB_MODULE(can_ada, m) {
 #ifdef VERSION_INFO
     m.attr("__version__") = Py_STRINGIFY(VERSION_INFO);
 #else
@@ -13,21 +14,21 @@ PYBIND11_MODULE(can_ada, m) {
     m.def("can_parse",
           &ada::can_parse,
           py::arg("input"),
-          py::arg("base_input") = static_cast<const std::string_view*>(nullptr));
+          py::arg("base_input") = static_cast<std::string_view*>(nullptr));
 
     py::class_<ada::url_aggregator>(m, "URL")
-        .def_property("hash", &ada::url_aggregator::get_hash, &ada::url_aggregator::set_hash)
-        .def_property("host", &ada::url_aggregator::get_host, &ada::url_aggregator::set_host)
-        .def_property("hostname", &ada::url_aggregator::get_hostname, &ada::url_aggregator::set_hostname)
-        .def_property("href", &ada::url_aggregator::get_href, &ada::url_aggregator::set_href)
-        .def_property("origin", &ada::url_aggregator::get_origin, nullptr)
-        .def_property("password", &ada::url_aggregator::get_password, &ada::url_aggregator::set_password)
-        .def_property("pathname", &ada::url_aggregator::get_pathname, &ada::url_aggregator::set_pathname)
-        .def_property("pathname_length", &ada::url_aggregator::get_pathname_length, nullptr)
-        .def_property("port", &ada::url_aggregator::get_port, &ada::url_aggregator::set_port)
-        .def_property("protocol", &ada::url_aggregator::get_protocol, &ada::url_aggregator::set_protocol)
-        .def_property("search", &ada::url_aggregator::get_search, &ada::url_aggregator::set_search)
-        .def_property("username", &ada::url_aggregator::get_username, &ada::url_aggregator::set_username)
+        .def_prop_rw("hash", &ada::url_aggregator::get_hash, &ada::url_aggregator::set_hash)
+        .def_prop_rw("host", &ada::url_aggregator::get_host, &ada::url_aggregator::set_host)
+        .def_prop_rw("hostname", &ada::url_aggregator::get_hostname, &ada::url_aggregator::set_hostname)
+        .def_prop_rw("href", &ada::url_aggregator::get_href, &ada::url_aggregator::set_href)
+        .def_prop_ro("origin", &ada::url_aggregator::get_origin)
+        .def_prop_rw("password", &ada::url_aggregator::get_password, &ada::url_aggregator::set_password)
+        .def_prop_rw("pathname", &ada::url_aggregator::get_pathname, &ada::url_aggregator::set_pathname)
+        .def_prop_ro("pathname_length", &ada::url_aggregator::get_pathname_length)
+        .def_prop_rw("port", &ada::url_aggregator::get_port, &ada::url_aggregator::set_port)
+        .def_prop_rw("protocol", &ada::url_aggregator::get_protocol, &ada::url_aggregator::set_protocol)
+        .def_prop_rw("search", &ada::url_aggregator::get_search, &ada::url_aggregator::set_search)
+        .def_prop_rw("username", &ada::url_aggregator::get_username, &ada::url_aggregator::set_username)
 
         .def("has_credentials", &ada::url_aggregator::has_credentials)
         .def("has_empty_hostname", &ada::url_aggregator::has_empty_hostname)
@@ -44,15 +45,20 @@ PYBIND11_MODULE(can_ada, m) {
         .def("__str__", &ada::url_aggregator::get_href)
         .def("validate", &ada::url_aggregator::validate);
 
-    m.def("idna_decode", &ada::idna::to_unicode);
-    m.def("idna_encode", [](std::string input) -> py::bytes {
-      return py::bytes(ada::idna::to_ascii(input));
+    m.def("idna_decode", [](py::bytes input) -> py::str {
+        auto result = ada::idna::to_unicode(input.c_str());
+        return py::str(result.c_str());
     });
 
-    m.def("parse", [](std::string_view input) {
+    m.def("idna_encode", [](const std::string_view input) -> py::bytes {
+        auto result = ada::idna::to_ascii(input);
+        return py::bytes(result.c_str(), result.size());
+    });
+
+    m.def("parse", [](const std::string_view input) {
         ada::result<ada::url_aggregator> url = ada::parse<ada::url_aggregator>(input);
         if (!url) {
-            throw pybind11::value_error("URL could not be parsed.");
+            throw py::value_error("URL could not be parsed.");
         }
         return url.value();
     });
