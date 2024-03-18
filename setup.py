@@ -1,7 +1,7 @@
 from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 setup(
     name="can_ada",
@@ -10,8 +10,9 @@ setup(
     author_email="tk@tkte.ch",
     long_description_content_type="text/markdown",
     long_description=open("README.md").read(),
-    url="https://github.com/tktech/can-ada",
+    url="https://github.com/tktech/can_ada",
     description="Ada is a fast spec-compliant url parser",
+    license="MIT",
     ext_modules=[
         Pybind11Extension(
             "can_ada",
