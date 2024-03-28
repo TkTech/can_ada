@@ -4,6 +4,3 @@ requires = [
     "pybind11>=2.10.0",
 ]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools.package-data]
-"can_ada" = ["py.typed", "can_ada.pyi"]
