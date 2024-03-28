@@ -42,7 +42,15 @@ PYBIND11_MODULE(can_ada, m) {
 
         .def("to_diagram", &ada::url_aggregator::to_diagram)
         .def("__str__", &ada::url_aggregator::get_href)
-        .def("validate", &ada::url_aggregator::validate);
+        .def("validate", &ada::url_aggregator::validate)
+
+        .def("__add__", [](const ada::url_aggregator &self, std::string_view other) {
+          ada::result<ada::url_aggregator> url = ada::parse<ada::url_aggregator>(other, &self);
+          if (!url) {
+              throw pybind11::value_error("URL could not be parsed.");
+          }
+          return url.value();
+        });
 
     m.def("idna_decode", &ada::idna::to_unicode);
     m.def("idna_encode", [](std::string input) -> py::bytes {
