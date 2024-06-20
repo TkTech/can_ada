@@ -13,6 +13,8 @@ setup(
     url="https://github.com/tktech/can_ada",
     description="Ada is a fast spec-compliant url parser",
     license="MIT",
+    packages=["can_ada-stubs"],
+    package_data={"can_ada-stubs": ["__init__.pyi"]},
     ext_modules=[
         Pybind11Extension(
             "can_ada",
@@ -22,12 +24,6 @@ setup(
             cxx_std=17
         ),
     ],
-    package_data={
-        "can_ada": [
-            "py.typed",
-            "can_ada.pyi"
-        ]
-    },
     extras_require={
         "test": [
             "pytest",
