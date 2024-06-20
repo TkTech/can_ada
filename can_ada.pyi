@@ -1,18 +1,19 @@
-from __future__ import annotations
-import can_ada
-import typing
+from typing import Iterator, overload
 
-__all__ = [
-    "URL",
-    "can_parse",
-    "parse",
-    "idna_encode",
-    "idna_decode"
-]
+__version__: str
 
-
-class URL():
-    def __str__(self) -> str: ...
+class URL:
+    hash: str
+    host: str
+    hostname: str
+    href: str
+    password: str
+    pathname: str
+    port: str
+    protocol: str
+    search: str
+    username: str
+    def __init__(self, *args, **kwargs) -> None: ...
     def has_credentials(self) -> bool: ...
     def has_empty_hostname(self) -> bool: ...
     def has_hash(self) -> bool: ...
@@ -25,104 +26,45 @@ class URL():
     def has_valid_domain(self) -> bool: ...
     def to_diagram(self) -> str: ...
     def validate(self) -> bool: ...
-    def __add__(self, other) -> "URL": ...
+    def __add__(self, arg0: str) -> URL: ...
     @property
-    def hash(self) -> str:
-        """
-        :type: str
-        """
-    @hash.setter
-    def hash(self, arg1: str) -> None:
-        pass
+    def origin(self) -> str: ...
     @property
-    def host(self) -> str:
-        """
-        :type: str
-        """
-    @host.setter
-    def host(self, arg1: str) -> None:
-        pass
-    @property
-    def hostname(self) -> str:
-        """
-        :type: str
-        """
-    @hostname.setter
-    def hostname(self, arg1: str) -> None:
-        pass
-    @property
-    def href(self) -> str:
-        """
-        :type: str
-        """
-    @href.setter
-    def href(self, arg1: str) -> None:
-        pass
-    @property
-    def origin(self) -> str:
-        """
-        :type: str
-        """
-    @property
-    def password(self) -> str:
-        """
-        :type: str
-        """
-    @password.setter
-    def password(self, arg1: str) -> None:
-        pass
-    @property
-    def pathname(self) -> str:
-        """
-        :type: str
-        """
-    @pathname.setter
-    def pathname(self, arg1: str) -> None:
-        pass
-    @property
-    def pathname_length(self) -> int:
-        """
-        :type: int
-        """
-    @property
-    def port(self) -> str:
-        """
-        :type: str
-        """
-    @port.setter
-    def port(self, arg1: str) -> None:
-        pass
-    @property
-    def protocol(self) -> str:
-        """
-        :type: str
-        """
-    @protocol.setter
-    def protocol(self, arg1: str) -> None:
-        pass
-    @property
-    def search(self) -> str:
-        """
-        :type: str
-        """
-    @search.setter
-    def search(self, arg1: str) -> None:
-        pass
-    @property
-    def username(self) -> str:
-        """
-        :type: str
-        """
-    @username.setter
-    def username(self, arg1: str) -> None:
-        pass
-    pass
-def can_parse(input: str, base_input: str = None) -> bool:
-    pass
-def parse(arg0: str) -> URL:
-    pass
-def idna_encode(arg0: str) -> bytes:
-    pass
-def idna_decode(arg0: bytes) -> str:
-    pass
-__version__ = '1.0.0'
+    def pathname_length(self) -> int: ...
+
+class URLSearchParams:
+    @overload
+    def __init__(self) -> None: ...
+    @overload
+    def __init__(self, arg0: str) -> None: ...
+    def append(self, arg0: str, arg1: str) -> None: ...
+    def copy(self) -> URLSearchParams: ...
+    def get(self, arg0: str) -> str | None: ...
+    def get_all(self, arg0: str) -> list[str]: ...
+    def has(self, key: str, value: str | None = ...) -> bool: ...
+    def keys(self) -> URLSearchParamsKeysIter: ...
+    def remove(self, key: str, value: str | None = ...) -> None: ...
+    def size(self) -> int: ...
+    def sort(self) -> None: ...
+    def values(self) -> URLSearchParamsValuesIter: ...
+    def __contains__(self, arg0: str) -> bool: ...
+    def __delitem__(self, arg0: str) -> None: ...
+    def __getitem__(self, arg0: str) -> str: ...
+    def __iter__(self) -> Iterator[tuple[str, str]]: ...
+    def __len__(self) -> int: ...
+    def __setitem__(self, arg0: str, arg1: str) -> None: ...
+
+class URLSearchParamsKeysIter:
+    def __init__(self, *args, **kwargs) -> None: ...
+    def __iter__(self) -> URLSearchParamsKeysIter: ...
+    def __next__(self) -> str | None: ...
+
+class URLSearchParamsValuesIter:
+    def __init__(self, *args, **kwargs) -> None: ...
+    def __iter__(self) -> URLSearchParamsValuesIter: ...
+    def __next__(self) -> str | None: ...
+
+def can_parse(input: str, base_input: str | None = ...) -> bool: ...
+def idna_decode(arg0: str) -> str: ...
+def idna_encode(arg0: str) -> bytes: ...
+def parse(arg0: str) -> URL: ...

@@ -5,6 +5,9 @@ def test_can_parse():
     assert can_ada.can_parse("/", "https://tkte.ch") is True
     assert can_ada.can_parse("/", "/tkte.ch") is False
 
+    assert can_ada.can_parse("https://tkte.ch") is True
+    assert can_ada.can_parse("//tkte.ch") is False
+
 
 def test_parse():
     """
