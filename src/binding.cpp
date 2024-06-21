@@ -11,8 +11,11 @@ PYBIND11_MODULE(can_ada, m) {
     m.attr("__version__") = "dev";
 #endif
 
-    m.def("can_parse", [](std::string_view input, std::optional<std::string_view*> base_input) {
-        return ada::can_parse(input, base_input.value_or(nullptr));
+    m.def("can_parse", [](std::string_view input, std::optional<const std::string_view> base_input) {
+        if (base_input.has_value()) {
+            return ada::can_parse(input, &base_input.value());
+        }
+        return ada::can_parse(input);
     }, py::arg("input"), py::arg("base_input") = py::none());
 
     py::class_<ada::url_aggregator>(m, "URL")
