@@ -1,4 +1,4 @@
-/* auto-generated on 2024-06-18 17:01:23 -0400. Do not edit! */
+/* auto-generated on 2024-09-02 20:07:32 -0400. Do not edit! */
 /* begin file src/ada.cpp */
 #include "ada.h"
 /* begin file src/checkers.cpp */
@@ -9795,6 +9795,10 @@ ADA_POP_DISABLE_WARNINGS
 
 namespace ada::unicode {
 
+constexpr bool is_tabs_or_newline(char c) noexcept {
+  return c == '\r' || c == '\n' || c == '\t';
+}
+
 constexpr uint64_t broadcast(uint8_t v) noexcept {
   return 0x101010101010101ull * v;
 }
@@ -9829,13 +9833,8 @@ ada_really_inline bool has_tabs_or_newline(
     std::string_view user_input) noexcept {
   // first check for short strings in which case we do it naively.
   if (user_input.size() < 16) {  // slow path
-    for (size_t i = 0; i < user_input.size(); i++) {
-      if (user_input[i] == '\r' || user_input[i] == '\n' ||
-          user_input[i] == '\t') {
-        return true;
-      }
-    }
-    return false;
+    return std::any_of(user_input.begin(), user_input.end(),
+                       is_tabs_or_newline);
   }
   // fast path for long strings (expected to be common)
   size_t i = 0;
@@ -9873,13 +9872,8 @@ ada_really_inline bool has_tabs_or_newline(
     std::string_view user_input) noexcept {
   // first check for short strings in which case we do it naively.
   if (user_input.size() < 16) {  // slow path
-    for (size_t i = 0; i < user_input.size(); i++) {
-      if (user_input[i] == '\r' || user_input[i] == '\n' ||
-          user_input[i] == '\t') {
-        return true;
-      }
-    }
-    return false;
+    return std::any_of(user_input.begin(), user_input.end(),
+                       is_tabs_or_newline);
   }
   // fast path for long strings (expected to be common)
   size_t i = 0;
@@ -10262,10 +10256,6 @@ std::string percent_encode(const std::string_view input,
     }
   }
   return out;
-}
-
-std::string to_unicode(std::string_view input) {
-  return ada::idna::to_unicode(input);
 }
 
 }  // namespace ada::unicode
@@ -11563,21 +11553,21 @@ ada_really_inline bool url::parse_scheme(const std::string_view input) {
       // If url's scheme is not a special scheme and buffer is a special scheme,
       // then return.
       if (is_special() != is_input_special) {
-        return true;
+        return false;
       }
 
       // If url includes credentials or has a non-null port, and buffer is
       // "file", then return.
       if ((has_credentials() || port.has_value()) &&
           parsed_type == ada::scheme::type::FILE) {
-        return true;
+        return false;
       }
 
       // If url's scheme is "file" and its host is an empty host, then return.
       // An empty host is the empty string.
       if (type == ada::scheme::type::FILE && host.has_value() &&
           host.value().empty()) {
-        return true;
+        return false;
       }
     }
 
@@ -12187,7 +12177,7 @@ result_type parse_url_impl(std::string_view user_input,
   if (!url.is_valid) {
     return url;
   }
-  if constexpr (result_type_is_ada_url_aggregator) {
+  if constexpr (result_type_is_ada_url_aggregator && store_values) {
     // Most of the time, we just need user_input.size().
     // In some instances, we may need a bit more.
     ///////////////////////////
@@ -12204,9 +12194,6 @@ result_type parse_url_impl(std::string_view user_input,
          helpers::leading_zeroes(uint32_t(1 | user_input.size()))) +
         1;
     url.reserve(reserve_capacity);
-    //
-    //
-    //
   }
   std::string tmp_buffer;
   std::string_view internal_input;
@@ -12429,32 +12416,36 @@ result_type parse_url_impl(std::string_view user_input,
               password_token_seen =
                   password_token_location != std::string_view::npos;
 
-              if (!password_token_seen) {
-                if constexpr (result_type_is_ada_url) {
-                  url.username += unicode::percent_encode(
-                      authority_view, character_sets::USERINFO_PERCENT_ENCODE);
+              if constexpr (store_values) {
+                if (!password_token_seen) {
+                  if constexpr (result_type_is_ada_url) {
+                    url.username += unicode::percent_encode(
+                        authority_view,
+                        character_sets::USERINFO_PERCENT_ENCODE);
+                  } else {
+                    url.append_base_username(unicode::percent_encode(
+                        authority_view,
+                        character_sets::USERINFO_PERCENT_ENCODE));
+                  }
                 } else {
-                  url.append_base_username(unicode::percent_encode(
-                      authority_view, character_sets::USERINFO_PERCENT_ENCODE));
-                }
-              } else {
-                if constexpr (result_type_is_ada_url) {
-                  url.username += unicode::percent_encode(
-                      authority_view.substr(0, password_token_location),
-                      character_sets::USERINFO_PERCENT_ENCODE);
-                  url.password += unicode::percent_encode(
-                      authority_view.substr(password_token_location + 1),
-                      character_sets::USERINFO_PERCENT_ENCODE);
-                } else {
-                  url.append_base_username(unicode::percent_encode(
-                      authority_view.substr(0, password_token_location),
-                      character_sets::USERINFO_PERCENT_ENCODE));
-                  url.append_base_password(unicode::percent_encode(
-                      authority_view.substr(password_token_location + 1),
-                      character_sets::USERINFO_PERCENT_ENCODE));
+                  if constexpr (result_type_is_ada_url) {
+                    url.username += unicode::percent_encode(
+                        authority_view.substr(0, password_token_location),
+                        character_sets::USERINFO_PERCENT_ENCODE);
+                    url.password += unicode::percent_encode(
+                        authority_view.substr(password_token_location + 1),
+                        character_sets::USERINFO_PERCENT_ENCODE);
+                  } else {
+                    url.append_base_username(unicode::percent_encode(
+                        authority_view.substr(0, password_token_location),
+                        character_sets::USERINFO_PERCENT_ENCODE));
+                    url.append_base_password(unicode::percent_encode(
+                        authority_view.substr(password_token_location + 1),
+                        character_sets::USERINFO_PERCENT_ENCODE));
+                  }
                 }
               }
-            } else {
+            } else if constexpr (store_values) {
               if constexpr (result_type_is_ada_url) {
                 url.password += unicode::percent_encode(
                     authority_view, character_sets::USERINFO_PERCENT_ENCODE);
@@ -12481,8 +12472,10 @@ result_type parse_url_impl(std::string_view user_input,
             break;
           }
           if (end_of_authority == input_size) {
-            if (fragment.has_value()) {
-              url.update_unencoded_base_hash(*fragment);
+            if constexpr (store_values) {
+              if (fragment.has_value()) {
+                url.update_unencoded_base_hash(*fragment);
+              }
             }
             return url;
           }
@@ -12797,9 +12790,11 @@ result_type parse_url_impl(std::string_view user_input,
           // Optimization: Avoiding going into PATH state improves the
           // performance of urls ending with /.
           if (input_position == input_size) {
-            url.update_base_pathname("/");
-            if (fragment.has_value()) {
-              url.update_unencoded_base_hash(*fragment);
+            if constexpr (store_values) {
+              url.update_base_pathname("/");
+              if (fragment.has_value()) {
+                url.update_unencoded_base_hash(*fragment);
+              }
             }
             return url;
           }
@@ -13045,8 +13040,10 @@ result_type parse_url_impl(std::string_view user_input,
         ada::unreachable();
     }
   }
-  if (fragment.has_value()) {
-    url.update_unencoded_base_hash(*fragment);
+  if constexpr (store_values) {
+    if (fragment.has_value()) {
+      url.update_unencoded_base_hash(*fragment);
+    }
   }
   return url;
 }
@@ -13218,21 +13215,21 @@ template <bool has_state_override>
       // If url's scheme is not a special scheme and buffer is a special scheme,
       // then return.
       if (is_special() != is_input_special) {
-        return true;
+        return false;
       }
 
       // If url includes credentials or has a non-null port, and buffer is
       // "file", then return.
       if ((has_credentials() || components.port != url_components::omitted) &&
           parsed_type == ada::scheme::type::FILE) {
-        return true;
+        return false;
       }
 
       // If url's scheme is "file" and its host is an empty host, then return.
       // An empty host is the empty string.
       if (type == ada::scheme::type::FILE &&
           components.host_start == components.host_end) {
-        return true;
+        return false;
       }
     }
 
@@ -13833,7 +13830,8 @@ bool url_aggregator::set_hostname(const std::string_view input) {
   return "null";
 }
 
-[[nodiscard]] std::string_view url_aggregator::get_username() const noexcept {
+[[nodiscard]] std::string_view url_aggregator::get_username() const noexcept
+    ada_lifetime_bound {
   ada_log("url_aggregator::get_username");
   if (has_non_empty_username()) {
     return helpers::substring(buffer, components.protocol_end + 2,
@@ -13842,7 +13840,8 @@ bool url_aggregator::set_hostname(const std::string_view input) {
   return "";
 }
 
-[[nodiscard]] std::string_view url_aggregator::get_password() const noexcept {
+[[nodiscard]] std::string_view url_aggregator::get_password() const noexcept
+    ada_lifetime_bound {
   ada_log("url_aggregator::get_password");
   if (has_non_empty_password()) {
     return helpers::substring(buffer, components.username_end + 1,
@@ -13851,7 +13850,8 @@ bool url_aggregator::set_hostname(const std::string_view input) {
   return "";
 }
 
-[[nodiscard]] std::string_view url_aggregator::get_port() const noexcept {
+[[nodiscard]] std::string_view url_aggregator::get_port() const noexcept
+    ada_lifetime_bound {
   ada_log("url_aggregator::get_port");
   if (components.port == url_components::omitted) {
     return "";
@@ -13860,7 +13860,8 @@ bool url_aggregator::set_hostname(const std::string_view input) {
                             components.pathname_start);
 }
 
-[[nodiscard]] std::string_view url_aggregator::get_hash() const noexcept {
+[[nodiscard]] std::string_view url_aggregator::get_hash() const noexcept
+    ada_lifetime_bound {
   ada_log("url_aggregator::get_hash");
   // If this's URL's fragment is either null or the empty string, then return
   // the empty string. Return U+0023 (#), followed by this's URL's fragment.
@@ -13873,7 +13874,8 @@ bool url_aggregator::set_hostname(const std::string_view input) {
   return helpers::substring(buffer, components.hash_start);
 }
 
-[[nodiscard]] std::string_view url_aggregator::get_host() const noexcept {
+[[nodiscard]] std::string_view url_aggregator::get_host() const noexcept
+    ada_lifetime_bound {
   ada_log("url_aggregator::get_host");
   // Technically, we should check if there is a hostname, but
   // the code below works even if there isn't.
@@ -13891,7 +13893,8 @@ bool url_aggregator::set_hostname(const std::string_view input) {
   return helpers::substring(buffer, start, components.pathname_start);
 }
 
-[[nodiscard]] std::string_view url_aggregator::get_hostname() const noexcept {
+[[nodiscard]] std::string_view url_aggregator::get_hostname() const noexcept
+    ada_lifetime_bound {
   ada_log("url_aggregator::get_hostname");
   // Technically, we should check if there is a hostname, but
   // the code below works even if there isn't.
@@ -13905,7 +13908,8 @@ bool url_aggregator::set_hostname(const std::string_view input) {
   return helpers::substring(buffer, start, components.host_end);
 }
 
-[[nodiscard]] std::string_view url_aggregator::get_pathname() const noexcept {
+[[nodiscard]] std::string_view url_aggregator::get_pathname() const noexcept
+    ada_lifetime_bound {
   ada_log("url_aggregator::get_pathname pathname_start = ",
           components.pathname_start, " buffer.size() = ", buffer.size(),
           " components.search_start = ", components.search_start,
@@ -13919,7 +13923,8 @@ bool url_aggregator::set_hostname(const std::string_view input) {
   return helpers::substring(buffer, components.pathname_start, ending_index);
 }
 
-[[nodiscard]] std::string_view url_aggregator::get_search() const noexcept {
+[[nodiscard]] std::string_view url_aggregator::get_search() const noexcept
+    ada_lifetime_bound {
   ada_log("url_aggregator::get_search");
   // If this's URL's query is either null or the empty string, then return the
   // empty string. Return U+003F (?), followed by this's URL's query.
@@ -13936,7 +13941,8 @@ bool url_aggregator::set_hostname(const std::string_view input) {
   return helpers::substring(buffer, components.search_start, ending_index);
 }
 
-[[nodiscard]] std::string_view url_aggregator::get_protocol() const noexcept {
+[[nodiscard]] std::string_view url_aggregator::get_protocol() const noexcept
+    ada_lifetime_bound {
   ada_log("url_aggregator::get_protocol");
   return helpers::substring(buffer, 0, components.protocol_end);
 }
@@ -15418,6 +15424,15 @@ void ada_search_params_sort(ada_url_search_params result) {
       *(ada::result<ada::url_search_params>*)result;
   if (r) {
     r->sort();
+  }
+}
+
+void ada_search_params_reset(ada_url_search_params result, const char* input,
+                             size_t length) {
+  ada::result<ada::url_search_params>& r =
+      *(ada::result<ada::url_search_params>*)result;
+  if (r) {
+    r->reset(std::string_view(input, length));
   }
 }
 
