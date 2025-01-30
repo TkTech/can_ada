@@ -60,6 +60,23 @@ url.search = "?q=canada&safe=off"
 print(url) # https://google.com/search?q=canada&safe=off
 ```
 
+`can_ada` also supports the `URLSearchParams` API:
+
+```python
+from can_ada import URLSearchParams
+
+params = URLSearchParams("q=canada&safe=off")
+params.append("page", "2")
+params.append("page", "3")
+params["q"] = "usa"
+print(params) # q=usa&safe=off&page=2&page=3
+print(params.has("q")) # True
+print(params.get("page")) # 2
+print(params.get_all("page")) # [2, 3]
+print(params.keys()) # ["q", "safe", "page"]
+print(params.values()) # ["usa", "off", "2", "3"]
+```
+
 ## Performance
 
 We find that `can_ada` is typically ~4x faster than urllib:
