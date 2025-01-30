@@ -2,6 +2,7 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
 
 name: Create release
 
@@ -50,7 +51,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-22.04, windows-2022, macos-13]
-        py: ["cp39", "cp310", "cp311", "cp312", "cp313", "pp39", "pp310"]
+        py: ["cp39", "cp310", "cp311", "cp312", "cp313", "pp39"]
 
     steps:
       - uses: actions/checkout@v4.1.1
