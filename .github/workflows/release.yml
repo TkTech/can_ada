@@ -17,7 +17,7 @@ jobs:
       - name: Setting up Python
         uses: actions/setup-python@v5.0.0
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Installing python build dependencies
         run: |
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/setup-python@v5.0.0
         name: Setting up Python
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - name: Set up QEMU
         if: runner.os == 'Linux'
