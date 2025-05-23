@@ -9,7 +9,12 @@
 
 namespace py = nanobind;
 
-NB_MODULE(can_ada, m) {
+static py::object get_parse_result_class() {
+    static py::object cls = py::module_::import("urllib.parse").attr("ParseResult");
+    return cls;
+}
+
+PYBIND11_MODULE(can_ada, m) {
 #ifdef VERSION_INFO
     m.attr("__version__") = Py_STRINGIFY(VERSION_INFO);
 #else
@@ -152,5 +157,67 @@ NB_MODULE(can_ada, m) {
         }
         return std::move(*url);
     });
+
+    m.def("parse_compat", [](std::string_view input) {
+        ada::result<ada::url_aggregator> result = ada::parse<ada::url_aggregator>(input);
+        if (!result) {
+            throw py::value_error("URL could not be parsed.");
+        }
+
+        auto& url = result.value();
+
+        std::string scheme = [&] {
+            std::string s = std::string(url.get_protocol());
+            return (!s.empty() && s.back() == ':') ? s.substr(0, s.size() - 1) : s;
+        }();
+
+
+        std::string netloc;
+        if (url.has_non_empty_username()) {
+            netloc += std::string(url.get_username());
+            if (url.has_password()) {
+                netloc += ":" + std::string(url.get_password());
+            }
+            netloc += "@";
+        }
+        netloc += std::string(url.get_host());
+        if (url.has_port()) {
+            netloc += ":" + std::string(url.get_port());
+        }
+
+        std::string path, params;
+        // not really correct, but this is urllib.parse.urlparse behaviour
+        [&] {
+            std::string raw_path = std::string(url.get_pathname());
+            size_t last_slash = raw_path.rfind('/');
+            std::string last_segment = (last_slash != std::string::npos)
+                ? raw_path.substr(last_slash + 1)
+                : raw_path;
+
+            size_t semi = last_segment.find(';');
+            if (semi != std::string::npos) {
+                path = (last_slash != std::string::npos ? raw_path.substr(0, last_slash + 1) : "")
+                    + last_segment.substr(0, semi);
+                params = last_segment.substr(semi + 1);
+            } else {
+                path = raw_path;
+                params = "";
+            }
+        }();
+
+        std::string query = [&] {
+            std::string s = std::string(url.get_search());
+            return (!s.empty() && s.front() == '?') ? s.substr(1) : s;
+        }();
+
+        std::string fragment = [&] {
+            std::string s = std::string(url.get_hash());
+            return (!s.empty() && s.front() == '#') ? s.substr(1) : s;
+        }();
+
+
+        return get_parse_result_class()(scheme, netloc, path, params, query, fragment);
+    });
+
 
 }

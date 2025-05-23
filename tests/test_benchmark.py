@@ -40,6 +40,14 @@ def can_ada_parse():
             # not valid WHATWG URLs.
             pass
 
+def can_ada_parse_compat():
+    for line in data():
+        try:
+            can_ada.parse_compat(line)
+        except ValueError:
+            # There are a small number of URLs in the sample data that are
+            # not valid WHATWG URLs.
+            pass
 
 def yarl_parse():
     for line in data():
@@ -69,3 +77,7 @@ def test_can_ada_parse(benchmark):
 @pytest.mark.slow
 def test_yarl_parse(benchmark):
     benchmark(yarl_parse)
+
+@pytest.mark.slow
+def test_can_ada_parse_compat(benchmark):
+    benchmark(can_ada_parse_compat)
