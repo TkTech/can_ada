@@ -10,7 +10,7 @@
 namespace py = nanobind;
 
 static py::object get_parse_result_class() {
-    static py::object cls = py::module_::import("urllib.parse").attr("ParseResult");
+    static py::object cls = py::module_::import_("urllib.parse").attr("ParseResult");
     return cls;
 }
 
