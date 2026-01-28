@@ -15,14 +15,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-13, windows-2022]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-22.04, macos-15, windows-2022]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
-    - uses: actions/checkout@v4.1.1
+    - uses: actions/checkout@v6.0.2
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5.0.0
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
 
