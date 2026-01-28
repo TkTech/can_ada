@@ -6,6 +6,7 @@ import urllib.parse
 
 ada_url = pytest.importorskip("ada_url")
 can_ada = pytest.importorskip("can_ada")
+yarl = pytest.importorskip("yarl")
 
 
 @lru_cache
@@ -40,6 +41,16 @@ def can_ada_parse():
             pass
 
 
+def yarl_parse():
+    for line in data():
+        try:
+            yarl.URL(line)
+        except ValueError:
+            # There are a small number of URLs in the sample data that are
+            # not valid WHATWG URLs.
+            pass
+
+
 @pytest.mark.slow
 def test_urllib_parse(benchmark):
     benchmark(urllib_parse)
@@ -53,3 +64,8 @@ def test_ada_python_parse(benchmark):
 @pytest.mark.slow
 def test_can_ada_parse(benchmark):
     benchmark(can_ada_parse)
+
+
+@pytest.mark.slow
+def test_yarl_parse(benchmark):
+    benchmark(yarl_parse)

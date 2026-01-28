@@ -15,7 +15,7 @@ requires-python = ">=3.9"
 Homepage = "https://github.com/tktech/can_ada"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-benchmark", "ada_url"]
+test = ["pytest", "pytest-benchmark", "ada_url", "yarl"]
 
 [tool.scikit-build]
 wheel.packages = ["can_ada-stubs"]
