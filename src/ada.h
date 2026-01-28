@@ -1,4 +1,4 @@
-/* auto-generated on 2024-09-02 20:07:32 -0400. Do not edit! */
+/* auto-generated on 2024-06-18 17:01:23 -0400. Do not edit! */
 /* begin file include/ada.h */
 /**
  * @file ada.h
@@ -477,18 +477,6 @@ namespace ada {
 
 #if defined(__aarch64__) || defined(_M_ARM64)
 #define ADA_NEON 1
-#endif
-
-#ifndef __has_cpp_attribute
-#define ada_lifetime_bound
-#elif __has_cpp_attribute(msvc::lifetimebound)
-#define ada_lifetime_bound [[msvc::lifetimebound]]
-#elif __has_cpp_attribute(clang::lifetimebound)
-#define ada_lifetime_bound [[clang::lifetimebound]]
-#elif __has_cpp_attribute(lifetimebound)
-#define ada_lifetime_bound [[lifetimebound]]
-#else
-#define ada_lifetime_bound
 #endif
 
 #endif  // ADA_COMMON_DEFS_H
@@ -4634,6 +4622,12 @@ bool to_ascii(std::optional<std::string>& out, std::string_view plain,
 
 /**
  * @private
+ * @see https://www.unicode.org/reports/tr46/#ToUnicode
+ */
+std::string to_unicode(std::string_view input);
+
+/**
+ * @private
  * Checks if the input has tab or newline characters.
  *
  * @attention The has_tabs_or_newline function is a bottleneck and it is simple
@@ -4857,38 +4851,35 @@ struct url_aggregator : url_base {
    * @see https://url.spec.whatwg.org/#dom-url-href
    * @see https://url.spec.whatwg.org/#concept-url-serializer
    */
-  [[nodiscard]] inline std::string_view get_href() const noexcept
-      ada_lifetime_bound;
+  [[nodiscard]] inline std::string_view get_href() const noexcept;
   /**
    * The username getter steps are to return this's URL's username.
    * This function does not allocate memory.
    * @return a lightweight std::string_view.
    * @see https://url.spec.whatwg.org/#dom-url-username
    */
-  [[nodiscard]] std::string_view get_username() const noexcept
-      ada_lifetime_bound;
+  [[nodiscard]] std::string_view get_username() const noexcept;
   /**
    * The password getter steps are to return this's URL's password.
    * This function does not allocate memory.
    * @return a lightweight std::string_view.
    * @see https://url.spec.whatwg.org/#dom-url-password
    */
-  [[nodiscard]] std::string_view get_password() const noexcept
-      ada_lifetime_bound;
+  [[nodiscard]] std::string_view get_password() const noexcept;
   /**
    * Return this's URL's port, serialized.
    * This function does not allocate memory.
    * @return a lightweight std::string_view.
    * @see https://url.spec.whatwg.org/#dom-url-port
    */
-  [[nodiscard]] std::string_view get_port() const noexcept ada_lifetime_bound;
+  [[nodiscard]] std::string_view get_port() const noexcept;
   /**
    * Return U+0023 (#), followed by this's URL's fragment.
    * This function does not allocate memory.
    * @return a lightweight std::string_view..
    * @see https://url.spec.whatwg.org/#dom-url-hash
    */
-  [[nodiscard]] std::string_view get_hash() const noexcept ada_lifetime_bound;
+  [[nodiscard]] std::string_view get_hash() const noexcept;
   /**
    * Return url's host, serialized, followed by U+003A (:) and url's port,
    * serialized.
@@ -4897,7 +4888,7 @@ struct url_aggregator : url_base {
    * @return a lightweight std::string_view.
    * @see https://url.spec.whatwg.org/#dom-url-host
    */
-  [[nodiscard]] std::string_view get_host() const noexcept ada_lifetime_bound;
+  [[nodiscard]] std::string_view get_host() const noexcept;
   /**
    * Return this's URL's host, serialized.
    * This function does not allocate memory.
@@ -4905,8 +4896,7 @@ struct url_aggregator : url_base {
    * @return a lightweight std::string_view.
    * @see https://url.spec.whatwg.org/#dom-url-hostname
    */
-  [[nodiscard]] std::string_view get_hostname() const noexcept
-      ada_lifetime_bound;
+  [[nodiscard]] std::string_view get_hostname() const noexcept;
   /**
    * The pathname getter steps are to return the result of URL path serializing
    * this's URL.
@@ -4914,8 +4904,7 @@ struct url_aggregator : url_base {
    * @return a lightweight std::string_view.
    * @see https://url.spec.whatwg.org/#dom-url-pathname
    */
-  [[nodiscard]] std::string_view get_pathname() const noexcept
-      ada_lifetime_bound;
+  [[nodiscard]] std::string_view get_pathname() const noexcept;
   /**
    * Compute the pathname length in bytes without instantiating a view or a
    * string.
@@ -4929,7 +4918,7 @@ struct url_aggregator : url_base {
    * @return a lightweight std::string_view.
    * @see https://url.spec.whatwg.org/#dom-url-search
    */
-  [[nodiscard]] std::string_view get_search() const noexcept ada_lifetime_bound;
+  [[nodiscard]] std::string_view get_search() const noexcept;
   /**
    * The protocol getter steps are to return this's URL's scheme, followed by
    * U+003A (:).
@@ -4937,8 +4926,7 @@ struct url_aggregator : url_base {
    * @return a lightweight std::string_view.
    * @see https://url.spec.whatwg.org/#dom-url-protocol
    */
-  [[nodiscard]] std::string_view get_protocol() const noexcept
-      ada_lifetime_bound;
+  [[nodiscard]] std::string_view get_protocol() const noexcept;
 
   /**
    * A URL includes credentials if its username or password is not the empty
@@ -5846,7 +5834,7 @@ inline void url::set_scheme(std::string &&new_scheme) noexcept {
   type = ada::scheme::get_scheme_type(new_scheme);
   // We only move the 'scheme' if it is non-special.
   if (!is_special()) {
-    non_special_scheme = std::move(new_scheme);
+    non_special_scheme = new_scheme;
   }
 }
 
@@ -5895,15 +5883,10 @@ inline void url::copy_scheme(const ada::url &u) {
 ada_really_inline size_t url::parse_port(std::string_view view,
                                          bool check_trailing_content) noexcept {
   ada_log("parse_port('", view, "') ", view.size());
-  if (!view.empty() && view[0] == '-') {
-    ada_log("parse_port: view[0] == '0' && view.size() > 1");
-    is_valid = false;
-    return 0;
-  }
   uint16_t parsed_port{};
   auto r = std::from_chars(view.data(), view.data() + view.size(), parsed_port);
   if (r.ec == std::errc::result_out_of_range) {
-    ada_log("parse_port: r.ec == std::errc::result_out_of_range");
+    ada_log("parse_port: std::errc::result_out_of_range");
     is_valid = false;
     return 0;
   }
@@ -6799,8 +6782,8 @@ inline bool url_aggregator::has_port() const noexcept {
          buffer[components.host_end + 1] == '.';
 }
 
-[[nodiscard]] inline std::string_view url_aggregator::get_href() const noexcept
-    ada_lifetime_bound {
+[[nodiscard]] inline std::string_view url_aggregator::get_href()
+    const noexcept {
   ada_log("url_aggregator::get_href");
   return buffer;
 }
@@ -6808,15 +6791,10 @@ inline bool url_aggregator::has_port() const noexcept {
 ada_really_inline size_t url_aggregator::parse_port(
     std::string_view view, bool check_trailing_content) noexcept {
   ada_log("url_aggregator::parse_port('", view, "') ", view.size());
-  if (!view.empty() && view[0] == '-') {
-    ada_log("parse_port: view[0] == '0' && view.size() > 1");
-    is_valid = false;
-    return 0;
-  }
   uint16_t parsed_port{};
   auto r = std::from_chars(view.data(), view.data() + view.size(), parsed_port);
   if (r.ec == std::errc::result_out_of_range) {
-    ada_log("parse_port: r.ec == std::errc::result_out_of_range");
+    ada_log("parse_port: std::errc::result_out_of_range");
     is_valid = false;
     return 0;
   }
@@ -7015,14 +6993,6 @@ struct url_search_params {
   inline auto back() const { return params.back(); }
   inline auto operator[](size_t index) const { return params[index]; }
 
-  /**
-   * @private
-   * Used to reset the search params to a new input.
-   * Used primarily for C API.
-   * @param input
-   */
-  void reset(std::string_view input);
-
  private:
   typedef std::pair<std::string, std::string> key_value_pair;
   std::vector<key_value_pair> params{};
@@ -7092,11 +7062,6 @@ namespace ada {
 // A default, empty url_search_params for use with empty iterators.
 template <typename T, ada::url_search_params_iter_type Type>
 url_search_params url_search_params_iter<T, Type>::EMPTY;
-
-inline void url_search_params::reset(std::string_view input) {
-  params.clear();
-  initialize(input);
-}
 
 inline void url_search_params::initialize(std::string_view input) {
   if (!input.empty() && input.front() == '?') {
@@ -7307,14 +7272,14 @@ url_search_params_entries_iter::next() {
 #ifndef ADA_ADA_VERSION_H
 #define ADA_ADA_VERSION_H
 
-#define ADA_VERSION "2.9.2"
+#define ADA_VERSION "2.8.0"
 
 namespace ada {
 
 enum {
   ADA_VERSION_MAJOR = 2,
-  ADA_VERSION_MINOR = 9,
-  ADA_VERSION_REVISION = 2,
+  ADA_VERSION_MINOR = 8,
+  ADA_VERSION_REVISION = 0,
 };
 
 }  // namespace ada
