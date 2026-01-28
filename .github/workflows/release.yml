@@ -13,12 +13,12 @@ jobs:
     name: Creating source release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v6.0.2
 
       - name: Setting up Python
-        uses: actions/setup-python@v5.4.0
+        uses: actions/setup-python@v6.2.0
         with:
-          python-version: 3.9
+          python-version: "3.9"
 
       - name: Installing python build dependencies
         run: |
@@ -35,7 +35,7 @@ jobs:
         run: |
           pytest
 
-      - uses: actions/upload-artifact@v4.3.1
+      - uses: actions/upload-artifact@v6.0.0
         with:
           name: dist-sdist
           path: dist/*.tar.gz
@@ -51,31 +51,31 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-22.04, windows-2022, macos-13]
-        py: ["cp39", "cp310", "cp311", "cp312", "cp313"]
+        py: ["cp39", "cp310", "cp311", "cp312", "cp313", "cp314"]
 
     steps:
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v6.0.2
 
-      - uses: actions/setup-python@v5.4.0
+      - uses: actions/setup-python@v6.2.0
         name: Setting up Python
         with:
-          python-version: '3.9'
+          python-version: "3.9"
 
       - name: Set up QEMU
         if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v3.7.0
         with:
           platforms: all
 
       - name: Build & test wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v3.3.1
         env:
           CIBW_ARCHS_LINUX: auto aarch64 ppc64le s390x
           CIBW_ARCHS_MACOS: x86_64 arm64 universal2
           CIBW_BUILD: "${{ matrix.py }}-*"
           CIBW_TEST_SKIP: "*_arm64 *_universal2:arm64"
 
-      - uses: actions/upload-artifact@v4.3.1
+      - uses: actions/upload-artifact@v6.0.0
         with:
           name: dist-${{ matrix.os }}-${{ matrix.py }}
           path: ./wheelhouse/*.whl
@@ -85,13 +85,13 @@ jobs:
     name: Uploading built packages to pypi for release.
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/download-artifact@v4.1.4
+    - uses: actions/download-artifact@v7.0.0
       with:
         pattern: dist-*
         merge-multiple: true
         path: dist
 
-    - uses: pypa/gh-action-pypi-publish@v1.8.14
+    - uses: pypa/gh-action-pypi-publish@v1.13.0
       with:
         user: ${{ secrets.PYPI_USERNAME }}
         password: ${{ secrets.PYPI_PASSWORD }}
