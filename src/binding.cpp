@@ -16,12 +16,10 @@ NB_MODULE(can_ada, m) {
     m.attr("__version__") = "dev";
 #endif
 
-    // Fast path without optional base - avoids std::optional overhead
     m.def("can_parse", [](std::string_view input) {
         return ada::can_parse(input);
     }, py::arg("input"));
 
-    // Overload with base URL
     m.def("can_parse", [](std::string_view input, std::string_view base_input) {
         return ada::can_parse(input, &base_input);
     }, py::arg("input"), py::arg("base_input"));
