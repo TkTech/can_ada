@@ -14,7 +14,7 @@ static py::object get_parse_result_class() {
     return cls;
 }
 
-PYBIND11_MODULE(can_ada, m) {
+NB_MODULE(can_ada, m) {
 #ifdef VERSION_INFO
     m.attr("__version__") = Py_STRINGIFY(VERSION_INFO);
 #else
