@@ -1,5 +1,10 @@
 #include <nanobind/nanobind.h>
+#include <nanobind/make_iterator.h>
+#include <nanobind/stl/optional.h>
+#include <nanobind/stl/pair.h>
+#include <nanobind/stl/string.h>
 #include <nanobind/stl/string_view.h>
+#include <nanobind/stl/vector.h>
 #include "ada.h"
 
 namespace py = nanobind;
@@ -11,10 +16,15 @@ NB_MODULE(can_ada, m) {
     m.attr("__version__") = "dev";
 #endif
 
-    m.def("can_parse",
-          &ada::can_parse,
-          py::arg("input"),
-          py::arg("base_input") = static_cast<std::string_view*>(nullptr));
+    // Fast path without optional base - avoids std::optional overhead
+    m.def("can_parse", [](std::string_view input) {
+        return ada::can_parse(input);
+    }, py::arg("input"));
+
+    // Overload with base URL
+    m.def("can_parse", [](std::string_view input, std::string_view base_input) {
+        return ada::can_parse(input, &base_input);
+    }, py::arg("input"), py::arg("base_input"));
 
     py::class_<ada::url_aggregator>(m, "URL")
         .def_prop_rw("hash", &ada::url_aggregator::get_hash, &ada::url_aggregator::set_hash)
@@ -43,7 +53,89 @@ NB_MODULE(can_ada, m) {
 
         .def("to_diagram", &ada::url_aggregator::to_diagram)
         .def("__str__", &ada::url_aggregator::get_href)
-        .def("validate", &ada::url_aggregator::validate);
+        .def("validate", &ada::url_aggregator::validate)
+
+        .def("__add__", [](const ada::url_aggregator &self, std::string_view other) {
+          ada::result<ada::url_aggregator> url = ada::parse<ada::url_aggregator>(other, &self);
+          if (!url) {
+              throw py::value_error("URL could not be parsed.");
+          }
+          return url.value();
+        });
+
+    py::class_<ada::url_search_params_keys_iter>(m, "URLSearchParamsKeysIter")
+        .def("__iter__", [](ada::url_search_params_keys_iter &self) {
+            return &self;
+        })
+        .def("__next__", [](ada::url_search_params_keys_iter &self) {
+            if (self.has_next()) {
+                return self.next();
+            } else {
+                throw py::stop_iteration();
+            }
+        });
+
+    py::class_<ada::url_search_params_values_iter>(m, "URLSearchParamsValuesIter")
+        .def("__iter__", [](ada::url_search_params_values_iter &self) {
+            return &self;
+        })
+        .def("__next__", [](ada::url_search_params_values_iter &self) {
+            if (self.has_next()) {
+                return self.next();
+            } else {
+                throw py::stop_iteration();
+            }
+        });
+
+    py::class_<ada::url_search_params>(m, "URLSearchParams")
+        .def(py::init<>())
+        .def(py::init<const std::string_view>())
+        .def("get", &ada::url_search_params::get)
+        .def("get_all", &ada::url_search_params::get_all)
+        .def("has", [](ada::url_search_params &self, std::string_view key, std::optional<std::string_view> value) {
+            if (value) {
+                return self.has(key, value.value());
+            }
+            return self.has(key);
+        }, py::arg("key"), py::arg("value") = py::none())
+        .def("append", &ada::url_search_params::append)
+        .def("remove", [](ada::url_search_params &self, std::string_view key, std::optional<std::string_view> value) {
+            if (value) {
+                self.remove(key, value.value());
+                return;
+            }
+            self.remove(key);
+        }, py::arg("key"), py::arg("value") = py::none())
+        .def("copy", [](ada::url_search_params &self) {
+            return ada::url_search_params(self);
+        })
+        .def("sort", &ada::url_search_params::sort)
+        .def("size", &ada::url_search_params::size)
+        .def("keys", [](ada::url_search_params &self) {
+            return self.get_keys();
+        }, py::rv_policy::reference_internal)
+        .def("values", [](ada::url_search_params &self) {
+            return self.get_values();
+        }, py::rv_policy::reference_internal)
+        .def("__str__", &ada::url_search_params::to_string)
+        .def("__getitem__", [](ada::url_search_params &self, std::string_view key) {
+            auto v = self.get(key);
+            if (v) {
+                return v.value();
+            }
+            throw py::key_error("Key not found.");
+        })
+        .def("__setitem__", &ada::url_search_params::set)
+        .def("__delitem__", [](ada::url_search_params &self, std::string_view key) {
+            self.remove(key);
+        })
+        .def("__len__", &ada::url_search_params::size)
+        .def("__contains__", [](ada::url_search_params &self, std::string_view key) {
+            return self.has(key);
+        })
+        .def("__iter__", [](ada::url_search_params &self) {
+            return py::make_iterator(py::type<ada::url_search_params>(), "Iterator", self.begin(), self.end());
+        });
 
     m.def("idna_decode", [](py::bytes input) -> py::str {
         auto result = ada::idna::to_unicode(input.c_str());
@@ -55,12 +147,12 @@ NB_MODULE(can_ada, m) {
         return py::bytes(result.c_str(), result.size());
     });
 
-    m.def("parse", [](const std::string_view input) {
+    m.def("parse", [](std::string_view input) {
         ada::result<ada::url_aggregator> url = ada::parse<ada::url_aggregator>(input);
         if (!url) {
             throw py::value_error("URL could not be parsed.");
         }
-        return url.value();
+        return std::move(*url);
     });
 
 }

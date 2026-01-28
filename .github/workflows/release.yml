@@ -2,6 +2,7 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
 
 name: Create release
 
@@ -15,9 +16,9 @@ jobs:
       - uses: actions/checkout@v4.1.1
 
       - name: Setting up Python
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v5.4.0
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Installing python build dependencies
         run: |
@@ -50,15 +51,15 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-22.04, windows-2022, macos-13]
-        py: ["cp37", "cp38", "cp39", "cp310", "cp311", "cp312", "pp37", "pp38", "pp39"]
+        py: ["cp39", "cp310", "cp311", "cp312", "cp313"]
 
     steps:
       - uses: actions/checkout@v4.1.1
 
-      - uses: actions/setup-python@v5.0.0
+      - uses: actions/setup-python@v5.4.0
         name: Setting up Python
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - name: Set up QEMU
         if: runner.os == 'Linux'
@@ -67,7 +68,7 @@ jobs:
           platforms: all
 
       - name: Build & test wheels
-        uses: pypa/cibuildwheel@v2.16.5
+        uses: pypa/cibuildwheel@v2.22.0
         env:
           CIBW_ARCHS_LINUX: auto aarch64 ppc64le s390x
           CIBW_ARCHS_MACOS: x86_64 arm64 universal2
