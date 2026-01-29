@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 
 
@@ -23,3 +24,17 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if 'slow' in item.keywords:
             item.add_marker(skip_slow)
+
+
+@pytest.fixture(scope="session")
+def top100str() -> list[str]:
+    current_file_dir = Path(__file__).parent
+    with open(current_file_dir / "data" / "top100.txt", "r") as f:
+        return f.readlines()
+
+
+@pytest.fixture(scope="session")
+def top100bytes() -> list[bytes]:
+    current_file_dir = Path(__file__).parent
+    with open(current_file_dir / "data" / "top100.txt", "rb") as f:
+        return f.readlines()

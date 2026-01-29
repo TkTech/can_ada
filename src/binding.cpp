@@ -9,8 +9,16 @@
 
 namespace py = nanobind;
 
-static py::object parse_compat_impl(std::string_view input,
-                                    py::object ParseResult_type);
+struct parse_impl_result {
+    std::string_view scheme;
+    std::string_view netloc;
+    std::string_view path;
+    std::string_view params;
+    std::string_view query;
+    std::string_view fragment;
+};
+
+static parse_impl_result parse_compat_impl(std::string_view input);
 
 NB_MODULE(can_ada, m) {
 #ifdef VERSION_INFO
@@ -162,17 +170,24 @@ NB_MODULE(can_ada, m) {
     static auto ParseResultBytes = urllib.attr("ParseResultBytes");
 
     m.def("parse_compat", [&](py::bytes input) {
-        return parse_compat_impl(std::string_view(input.c_str(), input.size()),
-                                 ParseResultBytes);
+        auto [scheme, netloc, path, params, query, fragment] =
+            parse_compat_impl(std::string_view(input.c_str(), input.size()));
+        return ParseResult(scheme, netloc, path, params, query, fragment);
     });
 
     m.def("parse_compat", [&](std::string_view input) {
-        return parse_compat_impl(input, ParseResult);
+        auto [scheme, netloc, path, params, query, fragment] =
+            parse_compat_impl(input);
+        return ParseResultBytes(py::bytes(scheme.data(), scheme.size()),
+                                py::bytes(netloc.data(), netloc.size()),
+                                py::bytes(path.data(), path.size()),
+                                py::bytes(params.data(), params.size()),
+                                py::bytes(query.data(), query.size()),
+                                py::bytes(fragment.data(), fragment.size()));
     });
 }
 
-static py::object parse_compat_impl(std::string_view input,
-                                    py::object ParseResult_type) {
+static parse_impl_result parse_compat_impl(std::string_view input) {
     auto result = ada::parse<ada::url_aggregator>(input);
     if (!result) {
         throw py::value_error("URL could not be parsed.");
@@ -231,5 +246,5 @@ static py::object parse_compat_impl(std::string_view input,
         fragment.remove_prefix(1);
     }
 
-    return ParseResult_type(scheme, netloc, path, params, query, fragment);
+    return {scheme, netloc, path, params, query, fragment};
 }
