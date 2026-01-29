@@ -9,6 +9,17 @@
 
 namespace py = nanobind;
 
+struct parse_impl_result {
+    std::string scheme;
+    std::string netloc;
+    std::string path;
+    std::string params;
+    std::string query;
+    std::string fragment;
+};
+
+static parse_impl_result parse_compat_impl(std::string_view input);
+
 NB_MODULE(can_ada, m) {
 #ifdef VERSION_INFO
     m.attr("__version__") = Py_STRINGIFY(VERSION_INFO);
@@ -153,4 +164,88 @@ NB_MODULE(can_ada, m) {
         return std::move(*url);
     });
 
+    auto urllib = py::module_::import_("urllib.parse");
+
+    auto ParseResult = py::object(urllib.attr("ParseResult"));
+    auto ParseResultBytes = py::object(urllib.attr("ParseResultBytes"));
+
+    m.def("parse_compat", [ParseResult](std::string_view input) {
+        auto [scheme, netloc, path, params, query, fragment] =
+            parse_compat_impl(input);
+        return ParseResult(scheme, netloc, path, params, query, fragment);
+    });
+
+    m.def("parse_compat", [ParseResultBytes](py::bytes input) {
+        auto [scheme, netloc, path, params, query, fragment] =
+            parse_compat_impl(std::string_view(input.c_str(), input.size()));
+        return ParseResultBytes(py::bytes(scheme.data(), scheme.size()),
+                                py::bytes(netloc.data(), netloc.size()),
+                                py::bytes(path.data(), path.size()),
+                                py::bytes(params.data(), params.size()),
+                                py::bytes(query.data(), query.size()),
+                                py::bytes(fragment.data(), fragment.size()));
+    });
+}
+
+static parse_impl_result parse_compat_impl(std::string_view input) {
+    auto result = ada::parse<ada::url_aggregator>(input);
+    if (!result) {
+        throw py::value_error("URL could not be parsed.");
+    }
+
+    auto url = std::move(*result);
+
+    auto scheme = url.get_protocol();
+    if (!scheme.empty() && scheme.back() == ':') {
+        scheme.remove_suffix(1);
+    }
+
+    std::string netloc;
+    {
+        if (url.has_non_empty_username()) {
+            netloc.append(url.get_username());
+            if (url.has_password()) {
+                netloc.push_back(':');
+                netloc.append(url.get_password());
+            }
+            netloc.push_back('@');
+        }
+
+        netloc.append(url.get_host());
+
+        if (url.has_port()) {
+            netloc.push_back(':');
+            netloc.append(url.get_port());
+        }
+    }
+
+    auto raw_path = url.get_pathname();
+    auto path = raw_path;
+    std::string_view params{};
+
+    auto last_slash = raw_path.rfind('/');
+    auto last_segment = (last_slash != std::string_view::npos)
+                            ? raw_path.substr(last_slash + 1)
+                            : raw_path;
+
+    auto semi = last_segment.find(';');
+    if (semi != std::string_view::npos) {
+        path = (last_slash != std::string_view::npos)
+                   ? raw_path.substr(0, last_slash + 1 + semi)
+                   : last_segment.substr(0, semi);
+        params = last_segment.substr(semi + 1);
+    }
+
+    auto query = url.get_search();
+    if (!query.empty() && query.front() == '?') {
+        query.remove_prefix(1);
+    }
+
+    auto fragment = url.get_hash();
+    if (!fragment.empty() && fragment.front() == '#') {
+        fragment.remove_prefix(1);
+    }
+
+    return {std::string(scheme), std::move(netloc),  std::string(path),
+            std::string(params), std::string(query), std::string(fragment)};
 }
