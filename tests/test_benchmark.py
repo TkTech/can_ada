@@ -83,7 +83,7 @@ def test_can_ada_parse_compat_bytes(
         for line in top100bytes:
             try:
                 can_ada.parse_compat(line)
-            except ValueError:
+            except (ValueError, UnicodeDecodeError):
                 # There are a small number of URLs in the sample data that are
                 # not valid WHATWG URLs.
                 pass

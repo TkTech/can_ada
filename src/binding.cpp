@@ -10,12 +10,12 @@
 namespace py = nanobind;
 
 struct parse_impl_result {
-    std::string_view scheme;
-    std::string_view netloc;
-    std::string_view path;
-    std::string_view params;
-    std::string_view query;
-    std::string_view fragment;
+    std::string scheme;
+    std::string netloc;
+    std::string path;
+    std::string params;
+    std::string query;
+    std::string fragment;
 };
 
 static parse_impl_result parse_compat_impl(std::string_view input);
@@ -166,18 +166,18 @@ NB_MODULE(can_ada, m) {
 
     auto urllib = py::module_::import_("urllib.parse");
 
-    static auto ParseResult = urllib.attr("ParseResult");
-    static auto ParseResultBytes = urllib.attr("ParseResultBytes");
+    auto ParseResult = py::object(urllib.attr("ParseResult"));
+    auto ParseResultBytes = py::object(urllib.attr("ParseResultBytes"));
 
-    m.def("parse_compat", [&](py::bytes input) {
+    m.def("parse_compat", [ParseResult](std::string_view input) {
         auto [scheme, netloc, path, params, query, fragment] =
-            parse_compat_impl(std::string_view(input.c_str(), input.size()));
+            parse_compat_impl(input);
         return ParseResult(scheme, netloc, path, params, query, fragment);
     });
 
-    m.def("parse_compat", [&](std::string_view input) {
+    m.def("parse_compat", [ParseResultBytes](py::bytes input) {
         auto [scheme, netloc, path, params, query, fragment] =
-            parse_compat_impl(input);
+            parse_compat_impl(std::string_view(input.c_str(), input.size()));
         return ParseResultBytes(py::bytes(scheme.data(), scheme.size()),
                                 py::bytes(netloc.data(), netloc.size()),
                                 py::bytes(path.data(), path.size()),
@@ -246,5 +246,6 @@ static parse_impl_result parse_compat_impl(std::string_view input) {
         fragment.remove_prefix(1);
     }
 
-    return {scheme, netloc, path, params, query, fragment};
+    return {std::string(scheme), std::move(netloc),  std::string(path),
+            std::string(params), std::string(query), std::string(fragment)};
 }
