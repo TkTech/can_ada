@@ -1,6 +1,6 @@
 # can_ada
 
-[Fast] Python bindings for [Ada][], a fast and WHATWG spec-compliant URL parser.
+Fast Python bindings for [Ada][], a fast and WHATWG spec-compliant URL parser.
 This is the URL parser used in projects like Node.js.
 
 ## Installation
@@ -10,7 +10,7 @@ pip install can_ada
 ```
 
 Binary wheels are available for most platforms. If not available, a
-C++17-or-greater compiler will be required to build the underlying Ada library.
+C++20-or-greater compiler will be required to build the underlying Ada library.
 
 ##  WHATWG URL compliance
 
@@ -73,10 +73,13 @@ params["q"] = "usa"
 print(params) # q=usa&safe=off&page=2&page=3
 print(params.has("q")) # True
 print(params.get("page")) # 2
-print(params.get_all("page")) # [2, 3]
-print(params.keys()) # ["q", "safe", "page"]
-print(params.values()) # ["usa", "off", "2", "3"]
+print(params.get_all("page")) # ["2", "3"]
+print(list(params.keys())) # ["q", "safe", "page", "page"]
+print(list(params.values())) # ["usa", "off", "2", "3"]
 ```
+
+API details are available through Python's `help()`, for example
+`help(can_ada.parse)` and `help(can_ada.URLSearchParams)`.
 
 ## Performance
 
