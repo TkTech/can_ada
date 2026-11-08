@@ -1,0 +1,140 @@
+name: CI and release
+
+on:
+  pull_request:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 10.15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-26, windows-2025]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+
+    steps:
+    - uses: actions/checkout@v7.0.1
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v7.1.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Installing platform dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Installing python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e '.'
+        pip install pytest
+
+    - name: Running tests
+      run: |
+        pytest
+
+  # Build & test simple source release before wasting hours building and
+  # testing the binary build matrix.
+  sdist:
+    name: Creating source release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Setting up Python
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.9"
+
+      - name: Installing python build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools
+
+      - name: Building source distribution
+        run: |
+          pip install -e "."
+          pip install pytest build
+          python -m build . --sdist
+
+      - name: Running tests
+        run: |
+          pytest
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: dist-sdist
+          path: dist/*.tar.gz
+
+  build_wheels:
+    needs: [build, sdist]
+    name: "[${{ strategy.job-index }}/${{ strategy.job-total }}] py${{ matrix.py }} on ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 10.15
+
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-26]
+        py: ["cp39", "cp310", "cp311", "cp312", "cp313", "cp314", "cp315"]
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-python@v7.1.0
+        name: Setting up Python
+        with:
+          python-version: "3.9"
+
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v4.4.0
+        with:
+          platforms: all
+
+      - name: Build & test wheels
+        uses: pypa/cibuildwheel@v4.3.5
+        env:
+          CIBW_ARCHS_LINUX: auto aarch64 ppc64le s390x
+          CIBW_ARCHS_MACOS: x86_64 arm64 universal2
+          CIBW_BUILD: "${{ matrix.py }}-*"
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: 'python -m pytest "{project}/tests"'
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: dist-${{ matrix.os }}-${{ matrix.py }}
+          path: ./wheelhouse/*.whl
+
+  upload_all:
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [build, build_wheels, sdist]
+    name: Uploading built packages to pypi for release.
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v8.0.2
+      with:
+        pattern: dist-*
+        merge-multiple: true
+        path: dist
+
+    - uses: pypa/gh-action-pypi-publish@v1.14.3
+      with:
+        user: ${{ secrets.PYPI_USERNAME }}
+        password: ${{ secrets.PYPI_PASSWORD }}
